@@ -31,8 +31,9 @@ def _parse_line(line):
 with g_1.as_default():
     
     dataset = tf.data.TextLineDataset(filenames).skip(1)
-    dataset = dataset.map(_parse_line, num_parallel_calls = 2)
-    dataset = dataset.repeat().batch(256)
+    dataset = dataset.apply(tf.contrib.data.map_and_batch(map_func=_parse_line, batch_size=256,\
+                                                          num_parallel_batches= 1))
+    dataset = dataset.repeat()
     dataset = dataset.prefetch(5)
     iterator = dataset.make_one_shot_iterator()
     features, label = iterator.get_next()
