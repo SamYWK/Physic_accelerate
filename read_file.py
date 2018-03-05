@@ -11,31 +11,28 @@ from sklearn.model_selection import train_test_split
 import tensorflow as tf
 from sklearn.preprocessing import MinMaxScaler
 
-reader = pd.read_table('minitree_4b_2_26.txt', sep = ' ')
-df = reader
-#df = pd.DataFrame(reader.get_chunk(500000))
-
-#print(df.iloc[0])
-
-Jet_genjetPt = df['Jet_genjetPt'].values
-Jet_pt = df['Jet_pt'].values
-y = (Jet_pt/Jet_genjetPt).reshape(-1, 1)
-X = df.drop(['Jet_genjetPt', 'Jet_pt'], axis = 1).values.astype(np.float64)
-#scaler = MinMaxScaler()
-#X = scaler.fit_transform(X)
-X = np.append(X, X[0].reshape(1, 17))
-print(X.shape)
-#train test split
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.2, random_state = 1)
-
-n, d = X_train.shape
-batch_size = 200
-epochs = 10
-learning_rate = 0.00001
+CSV_TYPES = [[0.0]]*19
 g_1 = tf.Graph()
-prediction = np.array([])
+learning_rate = 0.00001
+filenames = ['minitree_4b_2_26.txt']
+
+def _parse_line(line):
+    # Decode the line into its fields
+    fields = tf.decode_csv(line, record_defaults=CSV_TYPES, field_delim = ' ')
+    # Pack the result into a dictionary
+    #data = dict(zip(CSV_COLUMN_NAMES, fields))
+    # Separate the label from the features
+
+    label = fields[30]
+    label = tf.reshape(label, [1])
+    features = tf.stack(fields[0:30])
+    return features, label
 
 with g_1.as_default():
+    dataset = tf.data.TextLineDataset(filenames).skip(1)
+    dataset = dataset.map(_parse_line)
+    dataset = dataset.shuffle(1000).repeat().batch(100)
+    
     X_placeholder = tf.placeholder(tf.float64, [None, 17])
     y_placeholder = tf.placeholder(tf.float64, [None, 1])
     
@@ -61,15 +58,4 @@ with g_1.as_default():
         #writer
         #writer = tf.summary.FileWriter('logs/', sess.graph)
         
-        for epoch in range(epochs):
-            for batch in range(int (n / batch_size)):
-                batch_xs = X_train[(batch*batch_size) : (batch+1)*batch_size]
-                batch_ys = y_train[(batch*batch_size) : (batch+1)*batch_size]
-                
-                sess.run([train_step], feed_dict = {X_placeholder : batch_xs, y_placeholder : batch_ys})
-                if batch % 100 == 0:
-                    print(sess.run([loss], feed_dict = {X_placeholder : batch_xs, y_placeholder : batch_ys}))
         
-        prediction = np.append(prediction,sess.run(z6, feed_dict = {X_placeholder : X_test}))
-print('Prediction :', prediction[0])
-print('Truth :', y_test[0])
