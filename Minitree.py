@@ -10,41 +10,54 @@ import numpy as np
 from sklearn.model_selection import train_test_split
 import tensorflow as tf
 #import os
-import sys
 #os.environ["CUDA_VISIBLE_DEVICES"] = "7"
 import sklearn.metrics
-import time
 
 df = pd.read_csv('minitree_4b_2_26.csv', header = 0)
 #y = pd.concat((df['Jet_genjetPt'], df['Target']), axis = 1)
-y = df['Jet_pt'].values.reshape(-1, 1)
-X = df.drop(['Target', 'Jet_pt', 'Jet_genjetPt'], axis = 1).values
-
+y = df['Target'].values.reshape(-1, 1)
+X = df.drop(['Target', 'Jet_genjetPt', 'Jet_pt'], axis = 1).values
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 0.2, random_state = 1)
 
 print(X_train.shape)
 print(y_train.shape)
 print(X_test.shape)
 
-learning_rate = 0.00001
+learning_rate = 0.000001
 batch_size = 100
-epochs = 200
+epochs = 5
 g_1 = tf.Graph()
 n, d = X_train.shape
 
+def add_layer(inputs, in_dim, out_dim, activation = None, name = 'layer'):
+    with tf.name_scope(name):
+        with tf.name_scope('Weights'):
+            W = tf.Variable(tf.truncated_normal([in_dim, out_dim]))
+        with tf.name_scope('bias'):
+            b = tf.Variable(tf.zeros([out_dim]))
+        with tf.name_scope('Wx_plus_b'):
+            if activation == None:
+                output = tf.matmul(inputs, W) + b
+            else:
+                output = activation(tf.matmul(inputs, W) + b)
+        return output
+
 with g_1.as_default():
-    with tf.device('/device:GPU:0'):
+    with tf.device('/device:GPU:1'):
         X_placeholder = tf.placeholder(tf.float32, [None, 17])
         y_placeholder = tf.placeholder(tf.float32, [None, 1])
     
-        a1 = tf.layers.dense(X_placeholder, 40, tf.nn.relu, name = 'layer_1')
-        a2 = tf.layers.dense(a1, 40, tf.nn.relu, name = 'layer_2')
-        a3 = tf.layers.dense(a2, 40, tf.nn.relu, name = 'layer_3')
-        a4 = tf.layers.dense(a3, 40, tf.nn.relu, name = 'layer_4')
-        a5 = tf.layers.dense(a4, 40, tf.nn.relu, name = 'layer_5')
-        z6 = tf.layers.dense(a5, 1, name = 'layer_6')
+        a1 = add_layer(X_placeholder, 17, 15, tf.nn.sigmoid, name = 'layer_1')
+        a2 = add_layer(a1, 15, 15, tf.nn.sigmoid, name = 'layer_2')
+        a3 = add_layer(a2, 15, 15, tf.nn.sigmoid, name = 'layer_3')
+        a4 = add_layer(a3, 15, 15, tf.nn.sigmoid, name = 'layer_4')
+        a5 = add_layer(a4, 15, 10, tf.nn.sigmoid, name = 'layer_5')
+        a6 = add_layer(a5, 10, 10, tf.nn.sigmoid, name = 'layer_6')
+        a7 = add_layer(a6, 10, 10, tf.nn.sigmoid, name = 'layer_7')
+        a8 = add_layer(a7, 10, 5, name = 'layer_8')
+        z9 = add_layer(a8, 5, 1, name = 'layer_9')
     
-        loss = tf.losses.mean_squared_error(labels = y_placeholder, predictions = z6)
+        loss = tf.losses.mean_squared_error(labels = y_placeholder, predictions = z9)
         train_step = tf.train.GradientDescentOptimizer(learning_rate).minimize(loss)
     #initializer
     init = tf.global_variables_initializer()
@@ -64,9 +77,9 @@ with g_1.as_default():
                 batch_xs = X_train[(batch*batch_size) : (batch+1)*batch_size]
                 batch_ys = y_train[(batch*batch_size) : (batch+1)*batch_size]
                 sess.run(train_step, feed_dict = {X_placeholder:batch_xs, y_placeholder:batch_ys})
-                if batch % 1000:
+                if batch % 100000:
                     print(sess.run(loss, feed_dict = {X_placeholder:batch_xs, y_placeholder:batch_ys}))
-        #saver.save(sess, "./saver/model.ckpt")
+        saver.save(sess, "./saver/model.ckpt")
         
         #pred = sess.run(z6, feed_dict = {X_placeholder:X_test})
         '''
