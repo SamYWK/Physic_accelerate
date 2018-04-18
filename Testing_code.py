@@ -10,6 +10,7 @@ import pandas as pd
 
 def main():
     #Read testing data
+    #without Jet_genjetPt, which means column = 18
     X_test = pd.read_table('./minitree_4b_2_26.txt', header = 0, sep = ' ')
     
     #defining graph
