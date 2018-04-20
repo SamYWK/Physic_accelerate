@@ -11,7 +11,7 @@ import pandas as pd
 def main():
     #Read testing data
     #without Jet_genjetPt, which means column = 18
-    X_test = pd.read_table('./minitree_4b_2_26.txt', header = 0, sep = ' ')
+    X_test = pd.read_table('./minitree_4b_2_26.txt', header = 0, sep = ' ').drop(['Jet_genjetPt'], axis = 1)
     
     #defining graph
     g_1 = tf.Graph()
@@ -26,14 +26,8 @@ def main():
             a4 = tf.layers.dense(a3, 15, tf.nn.sigmoid, name = 'layer_4')
             a5 = tf.layers.dense(a4, 15, tf.nn.sigmoid, name = 'layer_5')
             a6 = tf.layers.dense(a5, 15, tf.nn.sigmoid, name = 'layer_6')
-            a7 = tf.layers.dense(a6, 15, tf.nn.sigmoid, name = 'layer_7')
-            a8 = tf.layers.dense(a7, 15, tf.nn.sigmoid, name = 'layer_8')
-            a9 = tf.layers.dense(a8, 15, tf.nn.sigmoid, name = 'layer_9')
-            a10 = tf.layers.dense(a9, 13, tf.nn.sigmoid, name = 'layer_10')
-            a11 = tf.layers.dense(a10, 13, tf.nn.sigmoid, name = 'layer_11')
-            a12 = tf.layers.dense(a11, 10, tf.nn.sigmoid, name = 'layer_12')
-            a13 = tf.layers.dense(a12, 10, name = 'layer_13')
-            z14 = tf.layers.dense(a13, 1, name = 'layer_14')
+            a7 = tf.layers.dense(a6, 10, tf.nn.sigmoid, name = 'layer_7')
+            a8 = tf.layers.dense(a7, 1, name = 'layer_8')
         
         config = tf.ConfigProto(allow_soft_placement = True, log_device_placement=True)
         config.gpu_options.allow_growth = True
@@ -44,7 +38,7 @@ def main():
             #restore parameters form saver
             saver.restore(sess, "./saver/model.ckpt")
             #make prediction
-            prediction = sess.run(z14, feed_dict = {X_placeholder:X_test})
+            prediction = sess.run(a8, feed_dict = {X_placeholder:X_test})
             
             #write prediction in text file
             text_file = open('prediction.txt', 'w')

@@ -12,7 +12,7 @@ import tensorflow as tf
 
 learning_rate = 0.00001
 batch_size = 100
-epochs = 150
+epochs = 100
 
 
 def main():
@@ -33,22 +33,16 @@ def main():
             X_placeholder = tf.placeholder(tf.float32, [None, 18])
             y_placeholder = tf.placeholder(tf.float32, [None, 1])
         
-            a1 = tf.layers.dense(X_placeholder, 15, tf.nn.relu, name = 'layer_1')
-            a2 = tf.layers.dense(a1, 15, tf.nn.relu, name = 'layer_2')
-            a3 = tf.layers.dense(a2, 15, tf.nn.relu, name = 'layer_3')
-            a4 = tf.layers.dense(a3, 15, tf.nn.relu, name = 'layer_4')
-            a5 = tf.layers.dense(a4, 15, tf.nn.relu, name = 'layer_5')
-            a6 = tf.layers.dense(a5, 15, tf.nn.relu, name = 'layer_6')
-            a7 = tf.layers.dense(a6, 15, tf.nn.relu, name = 'layer_7')
-            a8 = tf.layers.dense(a7, 15, tf.nn.relu, name = 'layer_8')
-            a9 = tf.layers.dense(a8, 15, tf.nn.relu, name = 'layer_9')
-            a10 = tf.layers.dense(a9, 13, tf.nn.relu, name = 'layer_10')
-            a11 = tf.layers.dense(a10, 13, tf.nn.relu, name = 'layer_11')
-            a12 = tf.layers.dense(a11, 10, tf.nn.relu, name = 'layer_12')
-            a13 = tf.layers.dense(a12, 10, name = 'layer_13')
-            z14 = tf.layers.dense(a13, 1, name = 'layer_14')
+            a1 = tf.layers.dense(X_placeholder, 15, tf.nn.sigmoid, name = 'layer_1')
+            a2 = tf.layers.dense(a1, 15, tf.nn.sigmoid, name = 'layer_2')
+            a3 = tf.layers.dense(a2, 15, tf.nn.sigmoid, name = 'layer_3')
+            a4 = tf.layers.dense(a3, 15, tf.nn.sigmoid, name = 'layer_4')
+            a5 = tf.layers.dense(a4, 15, tf.nn.sigmoid, name = 'layer_5')
+            a6 = tf.layers.dense(a5, 15, tf.nn.sigmoid, name = 'layer_6')
+            a7 = tf.layers.dense(a6, 10, tf.nn.sigmoid, name = 'layer_7')
+            a8 = tf.layers.dense(a7, 1, name = 'layer_8')
         
-            loss = tf.losses.mean_squared_error(labels = y_placeholder, predictions = z14)
+            loss = tf.losses.mean_squared_error(labels = y_placeholder, predictions = a8)
             train_step = tf.train.AdamOptimizer(learning_rate).minimize(loss)
             
         #initialize all variables
