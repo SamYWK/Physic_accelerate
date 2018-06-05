@@ -10,18 +10,9 @@ import tensorflow as tf
 #import os
 #os.environ["CUDA_VISIBLE_DEVICES"] = "7"
 
-learning_rate = 0.001
+learning_rate = 0.00001
 batch_size = 100
-epochs = 100
-
-def add_layrer(inputs, in_dim, out_dim, activation = None, name = 'layer'):
-    W = tf.Variable(tf.truncated_normal([in_dim, out_dim]))
-    b = tf.Variable(tf.zeros([out_dim]))
-    if activation == None:
-        output = tf.matmul(inputs, W) + b
-    else:
-        output = activation(tf.matmul(inputs, W) + b)
-    return output
+epochs = 1
 
 def main():
     #data preprocessing
@@ -41,14 +32,14 @@ def main():
             X_placeholder = tf.placeholder(tf.float32, [None, 18])
             y_placeholder = tf.placeholder(tf.float32, [None, 1])
         
-            a1 = add_layrer(X_placeholder, 18, 100, tf.nn.tanh, name = 'layer_1')
-            a2 = add_layrer(a1, 100, 100, tf.nn.tanh, name = 'layer_2')
-            a3 = add_layrer(a2, 100, 100, tf.nn.tanh, name = 'layer_3')
-            a4 = add_layrer(a3, 100, 100, tf.nn.tanh, name = 'layer_4')
-            a5 = add_layrer(a4, 100, 75, tf.nn.tanh, name = 'layer_5')
-            a6 = add_layrer(a5, 75, 15, tf.nn.tanh, name = 'layer_6')
-            a7 = add_layrer(a6, 15, 10, tf.nn.tanh, name = 'layer_7')
-            a8 = add_layrer(a7, 10, 1, name = 'layer_8')
+            a1 = tf.layers.dense(X_placeholder, 100, tf.nn.tanh, name = 'layer_1')
+            a2 = tf.layers.dense(a1, 100, tf.nn.tanh, name = 'layer_2')
+            a3 = tf.layers.dense(a2, 100, tf.nn.tanh, name = 'layer_3')
+            a4 = tf.layers.dense(a3, 100, tf.nn.tanh, name = 'layer_4')
+            a5 = tf.layers.dense(a4, 75, tf.nn.tanh, name = 'layer_5')
+            a6 = tf.layers.dense(a5, 15, tf.nn.tanh, name = 'layer_6')
+            a7 = tf.layers.dense(a6, 10, tf.nn.tanh, name = 'layer_7')
+            a8 = tf.layers.dense(a7, 1, name = 'layer_8')
         
             loss = tf.losses.mean_squared_error(labels = y_placeholder, predictions = a8)
             train_step = tf.train.AdamOptimizer(learning_rate).minimize(loss)
@@ -64,7 +55,8 @@ def main():
         with tf.Session(config = config) as sess:
             sess.run(init)
             #saver.restore(sess, "./saver/model.ckpt")
-            
+            large_loss_list = []
+            tmp_loss = 0
             #trianing part
             for epoch in range(epochs):
                 for batch in range(int (n / batch_size)):
@@ -73,10 +65,12 @@ def main():
                     sess.run(train_step, feed_dict = {X_placeholder:batch_xs, y_placeholder:batch_ys})
                     if batch % 50000:
                         #every 50000 batch print loss
-                        print(sess.run(loss, feed_dict = {X_placeholder:batch_xs, y_placeholder:batch_ys}))
-            
+                        if abs(sess.run(loss, feed_dict = {X_placeholder:batch_xs, y_placeholder:batch_ys}) - tmp_loss) > 0.1:
+                            large_loss_list.append(batch)
+                            print(sess.run(loss, feed_dict = {X_placeholder:batch_xs, y_placeholder:batch_ys}))
+                        tmp_loss = sess.run(loss, feed_dict = {X_placeholder:batch_xs, y_placeholder:batch_ys})
             #save parameters
-            saver.save(sess, "./saver/model.ckpt")
-
+            #saver.save(sess, "./saver/model.ckpt")
+            print("__________________list_________________\n", large_loss_list)
 if __name__ == "__main__":
     main()
