@@ -10,10 +10,18 @@ import tensorflow as tf
 #import os
 #os.environ["CUDA_VISIBLE_DEVICES"] = "7"
 
-learning_rate = 0.00001
+learning_rate = 0.001
 batch_size = 100
 epochs = 100
 
+def add_layrer(inputs, in_dim, out_dim, activation = None, name = 'layer'):
+    W = tf.Variable(tf.truncated_normal([in_dim, out_dim]))
+    b = tf.Variable(tf.zeros([out_dim]))
+    if activation == None:
+        output = tf.matmul(inputs, W) + b
+    else:
+        output = activation(tf.matmul(inputs, W) + b)
+    return output
 
 def main():
     #data preprocessing
@@ -33,14 +41,14 @@ def main():
             X_placeholder = tf.placeholder(tf.float32, [None, 18])
             y_placeholder = tf.placeholder(tf.float32, [None, 1])
         
-            a1 = tf.layers.dense(X_placeholder, 15, tf.nn.sigmoid, name = 'layer_1')
-            a2 = tf.layers.dense(a1, 15, tf.nn.sigmoid, name = 'layer_2')
-            a3 = tf.layers.dense(a2, 15, tf.nn.sigmoid, name = 'layer_3')
-            a4 = tf.layers.dense(a3, 15, tf.nn.sigmoid, name = 'layer_4')
-            a5 = tf.layers.dense(a4, 15, tf.nn.sigmoid, name = 'layer_5')
-            a6 = tf.layers.dense(a5, 15, tf.nn.sigmoid, name = 'layer_6')
-            a7 = tf.layers.dense(a6, 10, tf.nn.sigmoid, name = 'layer_7')
-            a8 = tf.layers.dense(a7, 1, name = 'layer_8')
+            a1 = add_layrer(X_placeholder, 18, 100, tf.nn.tanh, name = 'layer_1')
+            a2 = add_layrer(a1, 100, 100, tf.nn.tanh, name = 'layer_2')
+            a3 = add_layrer(a2, 100, 100, tf.nn.tanh, name = 'layer_3')
+            a4 = add_layrer(a3, 100, 100, tf.nn.tanh, name = 'layer_4')
+            a5 = add_layrer(a4, 100, 75, tf.nn.tanh, name = 'layer_5')
+            a6 = add_layrer(a5, 75, 15, tf.nn.tanh, name = 'layer_6')
+            a7 = add_layrer(a6, 15, 10, tf.nn.tanh, name = 'layer_7')
+            a8 = add_layrer(a7, 10, 1, name = 'layer_8')
         
             loss = tf.losses.mean_squared_error(labels = y_placeholder, predictions = a8)
             train_step = tf.train.AdamOptimizer(learning_rate).minimize(loss)
