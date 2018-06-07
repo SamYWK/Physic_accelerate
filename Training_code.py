@@ -11,8 +11,8 @@ import tensorflow as tf
 #os.environ["CUDA_VISIBLE_DEVICES"] = "7"
 
 learning_rate = 0.00001
-batch_size = 100
-epochs = 1
+batch_size = 1
+epochs = 10
 
 def main():
     #data preprocessing
@@ -36,9 +36,9 @@ def main():
             a2 = tf.layers.dense(a1, 100, tf.nn.tanh, name = 'layer_2')
             a3 = tf.layers.dense(a2, 100, tf.nn.tanh, name = 'layer_3')
             a4 = tf.layers.dense(a3, 100, tf.nn.tanh, name = 'layer_4')
-            a5 = tf.layers.dense(a4, 75, tf.nn.tanh, name = 'layer_5')
-            a6 = tf.layers.dense(a5, 15, tf.nn.tanh, name = 'layer_6')
-            a7 = tf.layers.dense(a6, 10, tf.nn.tanh, name = 'layer_7')
+            a5 = tf.layers.dense(a4, 100, tf.nn.tanh, name = 'layer_5')
+            a6 = tf.layers.dense(a5, 100, tf.nn.tanh, name = 'layer_6')
+            a7 = tf.layers.dense(a6, 100, tf.nn.tanh, name = 'layer_7')
             a8 = tf.layers.dense(a7, 1, name = 'layer_8')
         
             loss = tf.losses.mean_squared_error(labels = y_placeholder, predictions = a8)
@@ -53,24 +53,26 @@ def main():
         #saver
         saver = tf.train.Saver()
         with tf.Session(config = config) as sess:
-            sess.run(init)
-            #saver.restore(sess, "./saver/model.ckpt")
+            #sess.run(init)
+            saver.restore(sess, "./saver/model.ckpt")
             large_loss_list = []
-            tmp_loss = 0
             #trianing part
+            '''
             for epoch in range(epochs):
                 for batch in range(int (n / batch_size)):
                     batch_xs = X_train[(batch*batch_size) : (batch+1)*batch_size]
                     batch_ys = y_train[(batch*batch_size) : (batch+1)*batch_size]
                     sess.run(train_step, feed_dict = {X_placeholder:batch_xs, y_placeholder:batch_ys})
-                    if batch % 50000:
-                        #every 50000 batch print loss
-                        if abs(sess.run(loss, feed_dict = {X_placeholder:batch_xs, y_placeholder:batch_ys}) - tmp_loss) > 0.1:
-                            large_loss_list.append(batch)
-                            print(sess.run(loss, feed_dict = {X_placeholder:batch_xs, y_placeholder:batch_ys}))
-                        tmp_loss = sess.run(loss, feed_dict = {X_placeholder:batch_xs, y_placeholder:batch_ys})
+                    '''
+            for batch in range(int (n / batch_size)):
+                batch_xs = X_train[(batch*batch_size) : (batch+1)*batch_size]
+                batch_ys = y_train[(batch*batch_size) : (batch+1)*batch_size]
+                if (sess.run(loss, feed_dict = {X_placeholder:batch_xs, y_placeholder:batch_ys})) > 0.5:
+                    large_loss_list.append(batch)
+                    print(sess.run(loss, feed_dict = {X_placeholder:batch_xs, y_placeholder:batch_ys}))
+                    
             #save parameters
-            #saver.save(sess, "./saver/model.ckpt")
+            saver.save(sess, "./saver/model.ckpt")
             print("__________________list_________________\n", large_loss_list)
 if __name__ == "__main__":
     main()
