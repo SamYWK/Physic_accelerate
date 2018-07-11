@@ -12,15 +12,15 @@ from sklearn.preprocessing import MinMaxScaler
 #import os
 #os.environ["CUDA_VISIBLE_DEVICES"] = "7"
 
-learning_rate = 1e-4
+learning_rate = 1e-2
 batch_size = 6400
 epochs = 200
 
 def main():
     #data preprocessing
-    df = pd.read_table('minitree_4b_leading_2_26.txt', header = 0, sep = ' ')
-#    df = pd.read_csv('./minitree_4b_2_26_modified.csv', header = 0)
-    df['Target'] = (df['Jet_genjetPt']/df['Jet_pt']).values
+#    df = pd.read_table('minitree_4b_leading_2_26.txt', header = 0, sep = ' ')
+    df = pd.read_csv('./minitree_4b_2_26_modified.csv', header = 0)
+    df['Target'] = (df['Jet_genjetPt']-df['Jet_pt']).values
     y = df['Target'].values.reshape(-1, 1)
     X = df.drop(['Target', 'Jet_genjetPt'], axis = 1).values
     #normalize X
