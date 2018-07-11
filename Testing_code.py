@@ -27,9 +27,12 @@ def main():
             regularizer = None
         
             a1 = tf.layers.dense(X_placeholder, 18, activation = tf.nn.relu, name = 'layer_1', kernel_regularizer = regularizer)
-            a2 = tf.layers.dense(a1, 50, activation = tf.nn.relu, name = 'layer_2', kernel_regularizer = regularizer)
-            a3 = tf.layers.dense(a2, 50, activation = tf.nn.relu, name = 'layer_3', kernel_regularizer = regularizer)
-            a4 = tf.layers.dense(a3, 1, activation = None, name = 'layer_4', kernel_regularizer = regularizer)
+            a2 = tf.layers.dense(a1, 18, activation = tf.nn.relu, name = 'layer_2', kernel_regularizer = regularizer)
+            a3 = tf.layers.dense(a2, 1, activation = None, name = 'layer_3', kernel_regularizer = regularizer)
+            
+            a4 = tf.layers.dense(X_placeholder, 18, activation = tf.nn.relu, name = 'layer_4', kernel_regularizer = regularizer)
+            a5 = tf.layers.dense(a4, 18, activation = tf.nn.relu, name = 'layer_5', kernel_regularizer = regularizer)
+            a6 = tf.layers.dense(a5, 1, activation = None, name = 'layer_6', kernel_regularizer = regularizer)
         
         config = tf.ConfigProto(allow_soft_placement = True, log_device_placement=True)
         config.gpu_options.allow_growth = True
@@ -40,15 +43,15 @@ def main():
             #restore parameters form saver
             saver.restore(sess, "./saver/model.ckpt")
             #make prediction
-            prediction_list = sess.run(a4, feed_dict = {X_placeholder:X_test[0:batch_size]})
+            prediction_list = sess.run(a3, feed_dict = {X_placeholder:X_test[0:batch_size]})+sess.run(a6, feed_dict = {X_placeholder:X_test[0:batch_size]})
             for batch in range(1, 5000):
                 batch_xs = X_test[(batch*batch_size) : (batch+1)*batch_size]
-                prediction_list = np.append(prediction_list,  sess.run(a4, feed_dict = {X_placeholder:batch_xs}))
+                prediction_list = np.append(prediction_list,  sess.run(a3, feed_dict = {X_placeholder:batch_xs})+sess.run(a6, feed_dict = {X_placeholder:X_test[0:batch_size]}))
                 
 #            for i in range(int (n / batch_size) * batch_size, n):
 #                prediction_list = np.append(prediction_list,  sess.run(a6, feed_dict = {X_placeholder:X_test[i].reshape(1, -1)}))
-            
-            recoPt = df['Jet_pt'].values[0:500000] + prediction_list
+            print(prediction_list[0:10])
+            recoPt = df['Jet_pt'].values[0:500000] * prediction_list
 #            for i in range(len(recoPt)):
 #                if recoPt[i]== 0:
 #                    print(i)
