@@ -14,21 +14,22 @@ from sklearn.preprocessing import MinMaxScaler
 
 learning_rate = 1e-4
 batch_size = 6400
-epochs = 25
+epochs = 5
 
 def main():
     #data preprocessing
 #    df = pd.read_table('minitree_4b_leading_2_26.txt', header = 0, sep = ' ')
     df = pd.read_csv('./minitree_4b_2_26_modified.csv', header = 0)
     df['Target'] = (df['Jet_genjetPt']/df['Jet_pt']).values
-    y = df['Target'].values.reshape(-1, 1)
+    y = df['Jet_genjetPt'].values.reshape(-1, 1)
     X = df.drop(['Target', 'Jet_genjetPt'], axis = 1).values
+    jet = df['Jet_pt'].values.reshape(-1, 1)
     #normalize X
 #    scaler = MinMaxScaler()
 #    X = scaler.fit_transform(X)
-    np.random.shuffle(X)
+#    np.random.shuffle(X)
     X_train = X
-    np.random.shuffle(y)
+#    np.random.shuffle(y)
     y_train = y
     
     #define graph
@@ -39,24 +40,17 @@ def main():
         with tf.device('/device:GPU:0'):
             X_placeholder = tf.placeholder(tf.float64, [None, 18])
             y_placeholder = tf.placeholder(tf.float64, [None, 1])
+            jet_pt = tf.placeholder(tf.float64, [None, 1])
             
             regularizer = tf.contrib.layers.l2_regularizer(scale = 1e-2)
         
-            a1 = tf.layers.dense(X_placeholder, 64, activation = tf.nn.relu, name = 'layer_1', kernel_regularizer = regularizer)
-            a2 = tf.layers.dense(a1, 64, activation = tf.nn.relu, name = 'layer_2', kernel_regularizer = regularizer)
+            a1 = tf.layers.dense(X_placeholder, 164, activation = tf.nn.relu, name = 'layer_1', kernel_regularizer = regularizer)
+            a2 = tf.layers.dense(a1, 164, activation = tf.nn.relu, name = 'layer_2', kernel_regularizer = regularizer)
             a3 = tf.layers.dense(a2, 1, activation = None, name = 'layer_3', kernel_regularizer = regularizer)
             
-            a4 = tf.layers.dense(X_placeholder, 64, activation = tf.nn.relu, name = 'layer_4', kernel_regularizer = regularizer)
-            a5 = tf.layers.dense(a4, 64, activation = tf.nn.relu, name = 'layer_5', kernel_regularizer = regularizer)
-            a6 = tf.layers.dense(a5, 1, activation = None, name = 'layer_6', kernel_regularizer = regularizer)
-            
-            a7 =  a3 + a6
-            
-            loss_1 = tf.losses.huber_loss(predictions = a3, labels = y_placeholder)# + tf.losses.get_regularization_loss()
+            a4 = tf.multiply(jet_pt, a3)
+            loss_1 = tf.losses.huber_loss(predictions = a4, labels = y_placeholder)# + tf.losses.get_regularization_loss()
             train_step_1 = tf.train.AdamOptimizer(learning_rate).minimize(loss_1)
-            
-            loss_2 = tf.losses.huber_loss(predictions = a6, labels = y_placeholder)# + tf.losses.get_regularization_loss()
-            train_step_2 = tf.train.AdamOptimizer(learning_rate).minimize(loss_2)
             
         #initialize all variables
         init = tf.global_variables_initializer()
@@ -76,25 +70,26 @@ def main():
                 for batch in range(int (n / batch_size)):
                     batch_xs = X_train[(batch*batch_size) : (batch+1)*batch_size]
                     batch_ys = y_train[(batch*batch_size) : (batch+1)*batch_size]
-                    sess.run(train_step_1, feed_dict = {X_placeholder:batch_xs, y_placeholder:batch_ys})
+                    batch_jet = jet[(batch*batch_size) : (batch+1)*batch_size]
+                    sess.run(train_step_1, feed_dict = {X_placeholder:batch_xs, y_placeholder:batch_ys, jet_pt:batch_jet})
                     if batch % 5 == 0:
                         print('Epoch :', epoch, 
-                              'Loss :', sess.run(loss_1, feed_dict = {X_placeholder:batch_xs, y_placeholder:batch_ys}))
-            #generate new target
-            new_target = y[:batch_size].reshape(-1, 1) - sess.run(a3, feed_dict = {X_placeholder:X_train[:batch_size], y_placeholder:y_train[:batch_size].reshape(-1, 1)})
-            for batch in range(1, int (n / batch_size)):
-                new_target = np.append(new_target, (y[batch*batch_size:(batch+1)*batch_size].reshape(-1, 1) - sess.run(a3, feed_dict = {X_placeholder:X_train[batch*batch_size:(batch+1)*batch_size], y_placeholder:y_train[batch*batch_size:(batch+1)*batch_size].reshape(-1, 1)})))
-#            np.savetxt('new_target.csv', new_target, delimiter = ',')
-            print('New target size :', new_target.shape)
-            #trianing part
-            for epoch in range(epochs):
-                for batch in range(int (n / batch_size)):
-                    batch_xs = X_train[(batch*batch_size) : (batch+1)*batch_size]
-                    batch_ys = new_target[(batch*batch_size) : (batch+1)*batch_size].reshape(-1, 1)
-                    sess.run(train_step_2, feed_dict = {X_placeholder:batch_xs, y_placeholder:batch_ys})
-                    if batch % 5 == 0:
-                        print('Epoch :', epoch, 
-                              'Loss :', sess.run(loss_2, feed_dict = {X_placeholder:batch_xs, y_placeholder:batch_ys}))
+                              'Loss :', sess.run(loss_1, feed_dict = {X_placeholder:batch_xs, y_placeholder:batch_ys, jet_pt:batch_jet}))
+#            #generate new target
+#            new_target = y[:batch_size].reshape(-1, 1) - sess.run(a3, feed_dict = {X_placeholder:X_train[:batch_size], y_placeholder:y_train[:batch_size].reshape(-1, 1)})
+#            for batch in range(1, int (n / batch_size)):
+#                new_target = np.append(new_target, (y[batch*batch_size:(batch+1)*batch_size].reshape(-1, 1) - sess.run(a3, feed_dict = {X_placeholder:X_train[batch*batch_size:(batch+1)*batch_size], y_placeholder:y_train[batch*batch_size:(batch+1)*batch_size].reshape(-1, 1)})))
+##            np.savetxt('new_target.csv', new_target, delimiter = ',')
+#            print('New target size :', new_target.shape)
+#            #trianing part
+#            for epoch in range(epochs):
+#                for batch in range(int (n / batch_size)):
+#                    batch_xs = X_train[(batch*batch_size) : (batch+1)*batch_size]
+#                    batch_ys = new_target[(batch*batch_size) : (batch+1)*batch_size].reshape(-1, 1)
+#                    sess.run(train_step_2, feed_dict = {X_placeholder:batch_xs, y_placeholder:batch_ys})
+#                    if batch % 5 == 0:
+#                        print('Epoch :', epoch, 
+#                              'Loss :', sess.run(loss_2, feed_dict = {X_placeholder:batch_xs, y_placeholder:batch_ys}))
             #save parameters
             saver.save(sess, "./saver/model.ckpt")
 if __name__ == "__main__":
