@@ -18,8 +18,13 @@ epochs = 50
 
 def main():
     #data preprocessing
+<<<<<<< HEAD
 #    df = pd.read_table('minitree_4b_leading_2_26.txt', header = 0, sep = ' ')
     df = pd.read_csv('./minitree_4b_2_26_modified.csv', header = 0)
+=======
+    df = pd.read_table('minitree_4b_leading_2_26.txt', header = 0, sep = ' ')
+#    df = pd.read_csv('./minitree_4b_2_26_modified.csv', header = 0)
+>>>>>>> parent of 707a03d... Try new method
     df['Target'] = (df['Jet_genjetPt']/df['Jet_pt']).values
     y = df['Target'].values.reshape(-1, 1)
     X = df.drop(['Target', 'Jet_genjetPt'], axis = 1).values

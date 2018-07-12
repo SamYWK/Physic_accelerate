@@ -13,8 +13,8 @@ import matplotlib.pyplot as plt
 batch_size = 100
 
 def main():
-#    df = pd.read_table('./minitree_4b_leading_2_26.txt', header = 0, sep = ' ')
-    df = pd.read_csv('./minitree_4b_2_26_modified.csv', header = 0)
+    df = pd.read_table('./minitree_4b_leading_2_26.txt', header = 0, sep = ' ')
+#    df = pd.read_csv('./minitree_4b_2_26_modified.csv', header = 0)
     X_test = df.drop(['Jet_genjetPt'], axis = 1).values
     n = X_test.shape[0]
     print(n)
@@ -56,7 +56,11 @@ def main():
                 
 #            for i in range(int (n / batch_size) * batch_size, n):
 #                prediction_list = np.append(prediction_list,  sess.run(a6, feed_dict = {X_placeholder:X_test[i].reshape(1, -1)}))
+<<<<<<< HEAD
             print(prediction_list[0:10])
+=======
+            
+>>>>>>> parent of 707a03d... Try new method
             recoPt = df['Jet_pt'].values[0:500000] * prediction_list
 #            for i in range(len(recoPt)):
 #                if recoPt[i]== 0:
