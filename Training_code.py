@@ -13,8 +13,8 @@ from sklearn.preprocessing import MinMaxScaler
 #os.environ["CUDA_VISIBLE_DEVICES"] = "7"
 
 learning_rate = 1e-4
-batch_size = 6400
-epochs = 5
+batch_size = 640
+epochs = 50
 
 def main():
     #data preprocessing
@@ -44,12 +44,12 @@ def main():
             
             regularizer = tf.contrib.layers.l2_regularizer(scale = 1e-2)
         
-            a1 = tf.layers.dense(X_placeholder, 164, activation = tf.nn.relu, name = 'layer_1', kernel_regularizer = regularizer)
-            a2 = tf.layers.dense(a1, 164, activation = tf.nn.relu, name = 'layer_2', kernel_regularizer = regularizer)
+            a1 = tf.layers.dense(X_placeholder, 2048, activation = tf.nn.relu, name = 'layer_1', kernel_regularizer = regularizer)
+            a2 = tf.layers.dense(a1, 2048, activation = tf.nn.relu, name = 'layer_2', kernel_regularizer = regularizer)
             a3 = tf.layers.dense(a2, 1, activation = None, name = 'layer_3', kernel_regularizer = regularizer)
             
-            a4 = tf.multiply(jet_pt, a3)
-            loss_1 = tf.losses.huber_loss(predictions = a4, labels = y_placeholder)# + tf.losses.get_regularization_loss()
+            #a4 = tf.multiply(jet_pt, a3)
+            loss_1 = tf.losses.huber_loss(predictions = a3, labels = y_placeholder)# + tf.losses.get_regularization_loss()
             train_step_1 = tf.train.AdamOptimizer(learning_rate).minimize(loss_1)
             
         #initialize all variables
